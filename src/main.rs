@@ -1,8 +1,10 @@
 mod mines_generator;
 
-use gtk::prelude::*;
-use gtk::{Align, Application, ApplicationWindow, Button, Grid};
 use crate::mines_generator::*;
+use gtk::gdk::{EventButton, EventMask};
+use gtk::prelude::*;
+use gtk::prelude::*;
+use gtk::{glib, Align, Application, ApplicationWindow, Button, Grid};
 
 fn main() {
     let lines: usize = 10;
@@ -15,12 +17,6 @@ fn main() {
 
     app.connect_activate(build_ui);
     app.run();
-}
-
-
-
-fn on_button_clicked(button: &Button) {
-    eprintln!("Clicado na função!");
 }
 
 fn build_ui(app: &Application) {
@@ -48,17 +44,30 @@ fn build_ui(app: &Application) {
 
     window.set_child(Some(&grid));
 
-    let mut buttons: Vec<Button> = vec![Button::with_label("Start"); 10];
-
-    let button = Button::with_label("Botão");
-    button.connect_clicked(|button| on_button_clicked(button));
+    let mut buttons: Vec<Vec<Button>> = vec![vec![Button::with_label("Start"); 10]; 10];
 
     for i in 0..10 {
-        let label = String::from(i.to_string().as_str());
-        buttons[i as usize] = Button::with_label(label.as_str());
+        for j in 0..10 {
+            let label = String::from(i.to_string().as_str());
+            buttons[i as usize][j as usize] = Button::with_label(label.as_str());
 
-        grid.attach(&buttons[i as usize], i, 0, 1, 1);
+            buttons[i as usize][j as usize].add_events(EventMask::BUTTON_PRESS_MASK);                               // Conecta um sinal de evento de clique de botão do mouse
+            buttons[i as usize][j as usize].connect_button_press_event(move |_, event| {
+                handle_button_press(event, i, 0);
+                glib::signal::Propagation::Stop
+            });
+            grid.attach(&buttons[i as usize][j as usize], i, j, 1, 1);
+        }
     }
 
     window.show_all();
+}
+
+fn handle_button_press(event: &EventButton, row: i32, column: i32) {
+    match event.button() {
+        1 => println!("Botão ({}, {}) foi clicado com o botão ESQUERDO do mouse!", row + 1, column + 1),
+        2 => println!("Botão ({}, {}) foi clicado com o botão do MEIO do mouse!", row + 1, column + 1),
+        3 => println!("Botão ({}, {}) foi clicado com o botão DIREITO do mouse!", row + 1, column + 1),
+        _ => println!("Botão ({}, {}) foi clicado com outro botão do mouse!", row + 1, column + 1),
+    }
 }
